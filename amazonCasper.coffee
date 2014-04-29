@@ -59,43 +59,75 @@ casper.waitFor ->
     ret=true
     lists = jQuery(".gbwshoveler-content ul")
     return false unless lists.length > 10
-    # console.error "hi from evaluate"
-    lists.each (id, el)->
-      lis = jQuery(el).find("li")
-      unless lis.length > 0
-        ret = false
-        return false
-      true
-    ret 
+    true
 , thn = ->
   null
 , timeout = ->
   fs.write("the.html",this.getHTML())
 , 15000
-casper.zoom(0.2)
+
 casper.then ->
-  @capture "all.png"
-  cats = @evaluate ->
-    categories =[]
-    lists = jQuery(".gbwshoveler-content ul")
-    lists.each (id, el)->
-      lis = jQuery(el).find("li")
-      category=
-        name: id
+  @evaluate ->
+    window.preCategories =[]
+    jQuery(".ONETHIRTYFIVE-HERO").each (id, el)->
+      $el = jQuery(el)
+      window.preCategories.push  
+        $node: $el
+        totalPages: parseInt $el.find(".gbwpagination span")[1].innerHTML
+        shownPage: ->
+          parseInt $el.find(".gbwpagination span")[0].innerHTML
+        awaitingPage: 1
+        savedPage: 0
         items: []
-      categories.push category
-      lis.each (id,li)->
-        $li=jQuery(li)
-        item =
-          imageUrl: $li.find(".prodimg img").attr("src")
-          linkUrl: $li.find(".title a").attr("href")
-          description: $li.find(".title a").text()
-          timeLeft: $li.find(".ldtimeleft > span").html()
-        category.items.push item
+        finished: false
+        title: $el.find(".gbh2cont h2").text()
+        nextPage: ->
+          $el.find(".next-button a").click()
+casper.waitFor ->
+  @evaluate ->
+    ret=true
+    window.preCategories.forEach (el,ind)->
+      if el.savedPage < el.totalPages
+        ret = false 
+      else 
+        return null 
+      return null if el.$node.find("li.spinner > div > img").length > 0
+        
+      console.log("dbg1")
+      if(el.awaitingPage > el.shownPage())
+        return null
+      console.log("dbg2")
+      if(el.shownPage() > el.savedPage)        
+        lis = el.$node.find("ul li")
+        lis.each (id,li)->
+          $li=jQuery(li)
+          item =
+            imageUrl: $li.find(".prodimg img").attr("src")
+            linkUrl: $li.find(".title a").attr("href")
+            description: $li.find(".title a").text()
+            timeLeft: $li.find(".ldtimeleft > span").html()
+          if(item.imageUrl and item.description and item.timeLeft and item.linkUrl)
+            el.items.push item
+          console.log "item pushed"
+        el.savedPage++
+        if el.savedPage < el.totalPages
+          el.$node.find(".next-button a").click()
+          el.awaitingPage++
+    ret
+, thn = ->
+  null
+, timeout = ->
+  fs.write("the.html",this.getHTML())
+, 40000
+casper.then ->
+  cats = @evaluate ->
+    categories=[]
+    window.preCategories.forEach (el,ind)->
+      categories.push
+        title: el.title
+        items: el.items
     categories
   fs.write "out.json", JSON.stringify cats
-
-
 # casper.then ->
 #   fs.write("the.html",this.getHTML())
 #   null
