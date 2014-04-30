@@ -1,5 +1,17 @@
-#define ip and port to web service
-ip_server = "127.0.0.1:8585"
+casper = require("casper").create(
+  verbose: true
+  logLevel: "debug"
+  pageSettings:
+    loadImages:  false # The WebPage instance used by Casper will
+    loadPlugins: false # use these settings
+    # userAgent: "Mozilla/5.0 (X11; Linux x86_64; U; de; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 10.62"
+    userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36"
+  viewportSize: 
+    width: 2000
+    height: 2000
+)
+
+port = Number(casper.cli.get("port") || 5000);
 
 #includes web server modules
 server = require("webserver").create()
@@ -7,21 +19,9 @@ lg = ->
   console.log.apply console, arguments
   return
 #start web server
-service = server.listen(ip_server, (request, response) ->
+service = server.listen(port, (request, response) ->
 	catsOut= ""
 	statusCode = 200
-	casper = require("casper").create(
-	  verbose: true
-	  # logLevel: "debug"
-	  pageSettings:
-	    loadImages:  false # The WebPage instance used by Casper will
-	    loadPlugins: false # use these settings
-	    # userAgent: "Mozilla/5.0 (X11; Linux x86_64; U; de; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 10.62"
-	    userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36"
-	  viewportSize: 
-	    width: 2000
-	    height: 2000
-	)
 	resources = 0
 	url = "http://www.amazon.com/gp/goldbox/all-deals/ref=sv_gb_1";
 
@@ -106,10 +106,10 @@ service = server.listen(ip_server, (request, response) ->
 		response.setHeader('Content-Type', 'application/json'); 
 
 		#sends results as JSON object
-		response.write JSON.stringify(catsOut)
+		response.write catsOut
 		response.close()
 		return
 
 	return
 )
-console.log "Server running at http://" + ip_server + "/"
+console.log "Server is bound to port " + port
