@@ -21,7 +21,6 @@ lg = ->
 #start web server
 service = server.listen(port, (request, response) ->
 	catsOut= ""
-	statusCode = 200
 	resources = 0
 	url = "http://www.amazon.com/gp/goldbox/all-deals/ref=sv_gb_1";
 
@@ -88,7 +87,6 @@ service = server.listen(port, (request, response) ->
 	, thn = ->
 	  null
 	, timeout = ->
-	  statusCode = 500
 	  lg "timeOut while making all the ajax"
 	, 40000
 	casper.then ->
@@ -102,7 +100,7 @@ service = server.listen(port, (request, response) ->
 	  # fs.write "out.json", JSON.stringify cats
 	  catsOut=JSON.stringify(cats)
 	casper.run ->
-		response.statusCode = statusCode
+		response.statusCode = 200
 		response.setHeader('Content-Type', 'application/json'); 
 
 		#sends results as JSON object
