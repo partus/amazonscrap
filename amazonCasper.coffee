@@ -18,9 +18,9 @@ system = require('system')
 
 url = "http://www.amazon.com/gp/goldbox/all-deals/ref=sv_gb_1";
 # print out all the messages in the headless browser context
-casper.on "remote.message", (msg) ->
-  @echo "remote message caught: " + msg
-  return
+# casper.on "remote.message", (msg) ->
+#   @echo "remote message caught: " + msg
+#   return
 
 
 casper.start().thenOpen url, ->
@@ -67,7 +67,7 @@ casper.waitFor ->
         else 
           return null 
         if el.$node.find("li.spinner > div > img").length > 0
-          console.log "spining total:#{el.totalPages};saved:#{el.savedPage};awaiing:#{el.awaitingPage}"
+          # console.log "spining total:#{el.totalPages};saved:#{el.savedPage};awaiing:#{el.awaitingPage}"
           return null 
         if(el.awaitingPage > el.shownPage())
           return null
@@ -113,7 +113,10 @@ casper.then ->
   self = @
   # cats.forEach (el,ind)->
   #   self.open "http://localhost:3000/",{method: "post", data: JSON.stringify el }
-  self.open "http://localhost:5000/",{method: "post", data: {all: JSON.stringify cats} }, ->
+  self.open "http://localhost:#{system.env.PORT or 5000}/",{method: "post", data: {all: JSON.stringify cats} }, ->
     @echo "post done"
-  @echo JSON.stringify cats
+  # @echo JSON.stringify cats
 casper.run()
+
+
+lg "http://localhost:#{system.env.PORT or 5000}/"
