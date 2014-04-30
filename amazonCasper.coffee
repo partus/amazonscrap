@@ -1,10 +1,10 @@
+# run with --web-security=no
 lg = ->
   console.log.apply console, arguments
   return
-fs = require("fs")
 casper = require("casper").create(
   verbose: true
-  logLevel: "debug"
+  # logLevel: "debug"
   pageSettings:
     loadImages:  false # The WebPage instance used by Casper will
     loadPlugins: false # use these settings
@@ -15,43 +15,10 @@ casper = require("casper").create(
     height: 2000
 )
 
-# # print out all the messages in the headless browser context
-# casper.on "remote.message", (msg) ->
-#   @echo "remote message caught: " + msg
-#   return
-
-resources = 0
-
-casper.on "remote.message", (msg) ->
-  @echo "remote message caught: " + msg
-  return
-
-# casper.on "resource.requested", (data,req)->
-#   # @log "resource.requested: "+data.url
-#   resources++
-#   @log "resource.requested: "+resources
-# casper.on "resource.received", (resource)->
-#   # @log "resource.received: "+resource.url  
-#   resources--
-#   @log "resource.received: "+resources 
-
-
-casper.on "page.error", (msg, trace) ->
-  @echo "Page Error: " + msg, "ERROR"
-  return
-casper.on "page.log", (msg, trace) ->
-  @echo "Page Log: " + msg, "ERROR"
-  return
-
 url = "http://www.amazon.com/gp/goldbox/all-deals/ref=sv_gb_1";
 
 casper.start().thenOpen url, ->
-  console.log "page loaded"
-  # if @exists("a.UFIShareLink")
-  #   lg " a.UFIShareLink exists"
-  # else
-  #   lg " a.UFIShareLink ling doesnt exist"  
-  # return
+  null
 
 casper.waitFor ->
   # @echo "waitfor"
@@ -63,7 +30,7 @@ casper.waitFor ->
 , thn = ->
   null
 , timeout = ->
-  fs.write("the.html",this.getHTML())
+  null 
 , 15000
 
 casper.then ->
@@ -92,11 +59,8 @@ casper.waitFor ->
       else 
         return null 
       return null if el.$node.find("li.spinner > div > img").length > 0
-        
-      console.log("dbg1")
       if(el.awaitingPage > el.shownPage())
         return null
-      console.log("dbg2")
       if(el.shownPage() > el.savedPage)        
         lis = el.$node.find("ul li")
         lis.each (id,li)->
@@ -108,7 +72,6 @@ casper.waitFor ->
             timeLeft: $li.find(".ldtimeleft > span").html()
           if(item.imageUrl and item.description and item.timeLeft and item.linkUrl)
             el.items.push item
-          console.log "item pushed"
         el.savedPage++
         if el.savedPage < el.totalPages
           el.$node.find(".next-button a").click()
@@ -127,12 +90,6 @@ casper.then ->
         title: el.title
         items: el.items
     categories
-  fs.write "out.json", JSON.stringify cats
-# casper.then ->
-#   fs.write("the.html",this.getHTML())
-#   null
-# , ->
-#     lg "timed out"
-# , 5000
-
+  # fs.write "out.json", JSON.stringify cats
+  @echo JSON.stringify cats
 casper.run()
