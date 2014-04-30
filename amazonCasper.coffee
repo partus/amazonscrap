@@ -1,10 +1,10 @@
-# run with --web-security=no
+# run with --web-security=false 
 lg = ->
   console.log.apply console, arguments
   return
 casper = require("casper").create(
   verbose: true
-  # logLevel: "debug"
+  logLevel: "debug"
   pageSettings:
     loadImages:  false # The WebPage instance used by Casper will
     loadPlugins: false # use these settings
@@ -14,19 +14,25 @@ casper = require("casper").create(
     width: 2000
     height: 2000
 )
+system = require('system')
 
 url = "http://www.amazon.com/gp/goldbox/all-deals/ref=sv_gb_1";
+# print out all the messages in the headless browser context
+casper.on "remote.message", (msg) ->
+  @echo "remote message caught: " + msg
+  return
+
 
 casper.start().thenOpen url, ->
   null
 
 casper.waitFor ->
-  # @echo "waitfor"
   @evaluate ->
-    ret=true
     lists = jQuery(".gbwshoveler-content ul")
-    return false unless lists.length > 10
-    true
+    if lists.length > 10
+      true
+    else
+      false
 , thn = ->
   null
 , timeout = ->
@@ -37,51 +43,57 @@ casper.then ->
   @evaluate ->
     window.preCategories =[]
     jQuery(".ONETHIRTYFIVE-HERO").each (id, el)->
-      $el = jQuery(el)
+      $el = jQuery(@)
       window.preCategories.push  
         $node: $el
         totalPages: parseInt $el.find(".gbwpagination span")[1].innerHTML
         shownPage: ->
-          parseInt $el.find(".gbwpagination span")[0].innerHTML
+          parseInt @$node.find(".gbwpagination span")[0].innerHTML
         awaitingPage: 1
         savedPage: 0
         items: []
         finished: false
-        title: $el.find(".gbh2cont h2").text()
+        title: $el.find(".gbh2cont h2").text()?.trim()
         nextPage: ->
-          $el.find(".next-button a").click()
+          @$node.find(".next-button a").click()
+      true
 casper.waitFor ->
   @evaluate ->
-    ret=true
-    window.preCategories.forEach (el,ind)->
-      if el.savedPage < el.totalPages
-        ret = false 
-      else 
-        return null 
-      return null if el.$node.find("li.spinner > div > img").length > 0
-      if(el.awaitingPage > el.shownPage())
-        return null
-      if(el.shownPage() > el.savedPage)        
-        lis = el.$node.find("ul li")
-        lis.each (id,li)->
-          $li=jQuery(li)
-          item =
-            imageUrl: $li.find(".prodimg img").attr("src")
-            linkUrl: $li.find(".title a").attr("href")
-            description: $li.find(".title a").text()
-            timeLeft: $li.find(".ldtimeleft > span").html()
-          if(item.imageUrl and item.description and item.timeLeft and item.linkUrl)
-            el.items.push item
-        el.savedPage++
+    do ->
+      ret=true
+      window.preCategories.forEach (el,ind)->
         if el.savedPage < el.totalPages
-          el.$node.find(".next-button a").click()
-          el.awaitingPage++
-    ret
+          ret = false 
+        else 
+          return null 
+        if el.$node.find("li.spinner > div > img").length > 0
+          console.log "spining total:#{el.totalPages};saved:#{el.savedPage};awaiing:#{el.awaitingPage}"
+          return null 
+        if(el.awaitingPage > el.shownPage())
+          return null
+        if(el.shownPage() > el.savedPage)        
+          lis = el.$node.find("ul li")
+          lis.each (id,li)->
+            $li=jQuery(@)
+            item =
+              imageUrl: $li.find(".prodimg img").attr("src")
+              linkUrl: $li.find(".title a")[0]?.href
+              description: $li.find(".title a").text()?.trim()
+              timeLeft: $li.find(".ldtimeleft > span").text()
+            if(item.imageUrl and item.description and item.timeLeft and item.linkUrl)
+              el.items.push item
+            true
+          el.savedPage++
+          if el.savedPage < el.totalPages
+            el.$node.find(".next-button a").click()
+            el.awaitingPage++
+      ret
 , thn = ->
   null
 , timeout = ->
-  fs.write("the.html",this.getHTML())
-, 40000
+  @log "Timeout scraping page"
+  casper.exit()
+, 70000
 casper.then ->
   cats = @evaluate ->
     categories=[]
@@ -89,7 +101,19 @@ casper.then ->
       categories.push
         title: el.title
         items: el.items
+    # categories.forEach (el,ind)->
+    # jQuery.ajax
+    #   type: "POST"
+    #   url: "http://localhost:3000/"
+    #   data: JSON.stringify categories 
+    #   success: ->
+    #     console.log "success", arguments
+    #   async: false
     categories
-  # fs.write "out.json", JSON.stringify cats
+  self = @
+  # cats.forEach (el,ind)->
+  #   self.open "http://localhost:3000/",{method: "post", data: JSON.stringify el }
+  self.open "http://localhost:5000/",{method: "post", data: {all: JSON.stringify cats} }, ->
+    @echo "post done"
   @echo JSON.stringify cats
 casper.run()
