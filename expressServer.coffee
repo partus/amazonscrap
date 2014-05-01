@@ -51,7 +51,9 @@ server = app.listen(process.env.PORT or 5000, ->
   return
 )
 
+runCaper ->
+  execPuts "casperjs amazonCasper.coffee", ->
+  	lg "casper done"
 
-execPuts "casperjs amazonCasper.coffee", ->
-	lg "casper done"
-
+setInterval runCaper, 200000
+runCaper()

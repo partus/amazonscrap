@@ -1,17 +1,9 @@
-casper = require("casper").create(
-  verbose: true
-  logLevel: "debug"
-  pageSettings:
-    loadImages:  false # The WebPage instance used by Casper will
-    loadPlugins: false # use these settings
-    # userAgent: "Mozilla/5.0 (X11; Linux x86_64; U; de; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 10.62"
-    userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36"
-  viewportSize: 
-    width: 2000
-    height: 2000
-)
+Casper = require("casper").Casper
+system = require('system')
 
-port = Number(casper.cli.get("port") || 5000);
+
+
+port = Number(system.env.PORT || 5000);
 
 #includes web server modules
 server = require("webserver").create()
@@ -20,6 +12,18 @@ lg = ->
   return
 #start web server
 service = server.listen(port, (request, response) ->
+	casper = new Casper(
+	  verbose: true
+	  logLevel: "debug"
+	  pageSettings:
+	    loadImages:  false # The WebPage instance used by Casper will
+	    loadPlugins: false # use these settings
+	    # userAgent: "Mozilla/5.0 (X11; Linux x86_64; U; de; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 10.62"
+	    userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36"
+	  viewportSize: 
+	    width: 2000
+	    height: 2000
+	)
 	catsOut= ""
 	resources = 0
 	url = "http://www.amazon.com/gp/goldbox/all-deals/ref=sv_gb_1";

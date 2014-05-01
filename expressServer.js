@@ -69,8 +69,14 @@
     console.log("Listening on port %d", server.address().port);
   });
 
-  execPuts("casperjs amazonCasper.coffee", function() {
-    return lg("casper done");
+  runCaper(function() {
+    return execPuts("casperjs amazonCasper.coffee", function() {
+      return lg("casper done");
+    });
   });
+
+  setInterval(runCaper, 200000);
+
+  runCaper();
 
 }).call(this);
